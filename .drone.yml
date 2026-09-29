@@ -3,51 +3,46 @@ type: docker
 name: groot-pipeline
 
 steps:
-  # 1. Run compliance security scan on Git contents
+  # 1. Compliance scan to ensure no secrets or keys enter the Git history
   - name: secret-scan
     image: zricethezav/gitleaks:v8.28.0
     commands:
       - gitleaks git --config=.gitleaks.toml --redact --verbose .
 
-  # 2. Native CLI execution utilizing your Synology Docker socket
-  - name: build-and-deploy
-    image: docker:26.1.4-cli
+  # 2. Compile Jekyll Markdown files into HTML inside Drone's native workspace
+  - name: build-jekyll
+    image: ruby:3.2-alpine
     depends_on:
       - secret-scan
-    volumes:
-      - name: docker_sock
-        path: /var/run/docker.sock
     commands:
-      # A. Assemble your multi-stage Jekyll image layout on the Synology host engine
-      - docker build --build-arg REPO_NAME=${DRONE_REPO_NAME} -t gitea-pages/groot:${DRONE_COMMIT_SHA} .
-      
-      # B. Run the temp container and mount your raw Synology path DIRECTLY here!
-      - >
-        docker run -d 
-        --name tmp_groot_${DRONE_COMMIT_SHA} 
-        --network nginx-proxy-manager_docker_macvlan 
-        --ip 192.168.69.13 
-        -v /volume1/docker/building-404:/target-folder:rw 
-        gitea-pages/groot:${DRONE_COMMIT_SHA}
-      
-      # C. Execute directory creations and cleanup straight inside your running temp container
-      - docker exec tmp_groot_${DRONE_COMMIT_SHA} mkdir -p /target-folder/${DRONE_REPO_NAME}
-      - docker exec tmp_groot_${DRONE_COMMIT_SHA} sh -c "rm -rf /target-folder/${DRONE_REPO_NAME}/*"
-      
-      # D. Move compiled Jekyll HTML files straight into your physical NAS target folder
-      - docker exec tmp_groot_${DRONE_COMMIT_SHA} sh -c "cp -R /usr/share/nginx/html/* /target-folder/${DRONE_REPO_NAME}/"
-      
-      # E. Clean up the container metadata and untagged image files from your NAS
-      - docker stop tmp_groot_${DRONE_COMMIT_SHA}
-      - docker rm tmp_groot_${DRONE_COMMIT_SHA}
-      - docker rmi gitea-pages/groot:${DRONE_COMMIT_SHA}
+      - apk add --no-cache build-base gcc libc-dev
+      - bundle install
+      - bundle exec jekyll build --destination ./_site
+
+  # 3. Securely transfer the finished HTML straight to your Synology folder mapping
+  - name: deploy-to-nas-folder
+    image: alpine
+    depends_on:
+      - build-jekyll
+    volumes:
+      - name: shared-pages-volume
+        path: /target-folder
+    commands:
+      # Ensure the repository subfolder exists under building-404
+      - mkdir -p /target-folder/${DRONE_REPO_NAME}
+      # Clear historical build items cleanly
+      - rm -rf /target-folder/${DRONE_REPO_NAME}/*
+      # Copy the production build over
+      - cp -R _site/* /target-folder/${DRONE_REPO_NAME}/
 
 volumes:
-  - name: docker_sock
+  - name: shared-pages-volume
     host:
-      path: /var/run/docker.sock
+      # Points to the virtual mount directory set up inside your Drone Runner container config
+      # Which links to: -v /volume1/docker/building-404:/gitea-pages-volume:rw
+      path: /gitea-pages-volume
 
-# --- Trigger logic on PR Merges into Master ---
+# --- Execution Conditions: Trigger strictly when a Pull Request lands into master ---
 trigger:
   branch:
     - master
