@@ -1,0 +1,39 @@
+# Gitleaks Baseline Configuration for Jekyll/Markdown Repositories
+
+[extend]
+# Automatically includes the default global ruleset (AWS keys, GitHub tokens, etc.)
+useDefault = true
+
+[allowlist]
+description = "Global allowlist to prevent false positives in Markdown and configuration files"
+
+# 1. Skip paths and file extensions that frequently trigger false flags
+paths = [
+    # Ignore compiled output folders just in case they exist locally
+    '''_site/''',
+    '''.sass-cache/''',
+    # Ignore package lock files which contain long hash strings
+    '''Gemfile.lock''',
+    '''package-lock.json'''
+]
+
+# 2. Ignore generic text formats for basic rules, but keep deep scanning active
+# (Gitleaks won't trip over a markdown paragraph that looks vaguely like a string)
+extensions = [
+    '''md''',
+    '''markdown''',
+    '''txt''',
+    '''html''',
+    '''css'''
+]
+
+# 3. Specific rules to ignore common Jekyll/Docker strings
+regexes = [
+    # Ignore typical local/private IP structures used in your _config.yml or scripts
+    '''192\.168\.\d{1,3}\.\d{1,3}''',
+    # Ignore standard Docker volume mappings and paths
+    '''/var/run/docker\.sock''',
+    '''/gitea-pages-volume''',
+    # Ignore typical markdown placeholder links and URLs
+    '''https?://[a-zA-Z0-9\-\.]+\.pages\.yourdomain\.com'''
+]
