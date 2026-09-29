@@ -1,0 +1,16 @@
+---
+layout: default
+title: Home
+---
+
+<h2>Latest Logs & Updates 🛠️</h2>
+
+<ul style="list-style-type: none; padding-left: 0;">
+  {% for post in site.posts %}
+    <li style="margin-bottom: 15px;">
+      <small style="color: #666; margin-right: 10px;">{{ post.date | date: "%Y-%m-%d" }}</small>
+      <a href="{{ post.url }}" style="font-weight: bold; font-size: 1.1em;">{{ post.title }}</a>
+      <p style="margin: 5px 0 0 0; color: #555; font-size: 0.95em;">{{ post.excerpt | strip_html | truncatewords: 25 }}</p>
+    </li>
+  {% endfor %}
+</ul>
