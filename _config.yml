@@ -1,16 +1,15 @@
-title: "Groot Homelab Pages"
-description: "Self-hosted blogging via Gitea, Drone CI, and Docker"
+title: "Building 404"
+description: "Common ideas, uncommonly easy. Building 404 is a tech and DIY blog dedicated to making smart, everyday upgrades dead-simple to build. We look at common-sense features missing from daily life—like automating an IKEA desk, modding home furniture, or adding quick smart-home sensors—and break down the hardware and code so any hobbyist can implement them without the headache. No elite gatekeeping, just practical projects made uncommonly easy."
 
-# Keep these empty so assets build safely at the root level of your Nginx container
+# Keep these empty so assets build safely at the root level
 baseurl: ""
 url: ""
 
 permalink: /:categories/:year/:month/:day/:title.html
 
-# Crucial fallback inclusions
+# Exclude pipeline code from your final public site target folder
 exclude:
   - Gemfile
   - Gemfile.lock
   - .drone.yml
   - .gitleaks.toml
-  - Dockerfile
