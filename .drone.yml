@@ -9,7 +9,7 @@ steps:
     commands:
       - gitleaks git --config=.gitleaks.toml --redact --verbose .
 
-  # 2. Native CLI execution with network override and static IP assignment
+  # 2. Native CLI execution utilizing your Synology Docker socket
   - name: build-and-deploy
     image: docker:26.1.4-cli
     depends_on:
@@ -17,23 +17,27 @@ steps:
     volumes:
       - name: docker_sock
         path: /var/run/docker.sock
-      - name: shared-pages-volume
-        path: /target-folder
     commands:
-      # A. Assemble your multi-stage Jekyll image layout on the Synology host
+      # A. Assemble your multi-stage Jekyll image layout on the Synology host engine
       - docker build --build-arg REPO_NAME=${DRONE_REPO_NAME} -t gitea-pages/groot:${DRONE_COMMIT_SHA} .
       
-      # B. Run container directly on the Macvlan network with your desired fixed IP
-      - docker run -d --name tmp_groot_${DRONE_COMMIT_SHA} --network nginx-proxy-manager_docker_macvlan --ip 192.168.69.13 gitea-pages/groot:${DRONE_COMMIT_SHA}
+      # B. Run the temp container and mount your raw Synology path DIRECTLY here!
+      - >
+        docker run -d 
+        --name tmp_groot_${DRONE_COMMIT_SHA} 
+        --network nginx-proxy-manager_docker_macvlan 
+        --ip 192.168.69.13 
+        -v /volume1/docker/building-404:/target-folder:rw 
+        gitea-pages/groot:${DRONE_COMMIT_SHA}
       
-      # C. Prepare destination space and clean previous site histories 
-      - mkdir -p /target-folder/${DRONE_REPO_NAME}
-      - rm -rf /target-folder/${DRONE_REPO_NAME}/*
+      # C. Execute directory creations and cleanup straight inside your running temp container
+      - docker exec tmp_groot_${DRONE_COMMIT_SHA} mkdir -p /target-folder/${DRONE_REPO_NAME}
+      - docker exec tmp_groot_${DRONE_COMMIT_SHA} sh -c "rm -rf /target-folder/${DRONE_REPO_NAME}/*"
       
-      # D. Direct asset migration over to your shared Nginx volume path
-      - docker cp tmp_groot_${DRONE_COMMIT_SHA}:/usr/share/nginx/html/. /target-folder/${DRONE_REPO_NAME}/
+      # D. Move compiled Jekyll HTML files straight into your physical NAS target folder
+      - docker exec tmp_groot_${DRONE_COMMIT_SHA} sh -c "cp -R /usr/share/nginx/html/* /target-folder/${DRONE_REPO_NAME}/"
       
-      # E. Execute clean up sweeps to completely avoid NAS storage clutter
+      # E. Clean up the container metadata and untagged image files from your NAS
       - docker stop tmp_groot_${DRONE_COMMIT_SHA}
       - docker rm tmp_groot_${DRONE_COMMIT_SHA}
       - docker rmi gitea-pages/groot:${DRONE_COMMIT_SHA}
@@ -42,9 +46,6 @@ volumes:
   - name: docker_sock
     host:
       path: /var/run/docker.sock
-  - name: shared-pages-volume
-    host:
-      path: /gitea-pages-volume
 
 # --- Trigger logic on PR Merges into Master ---
 trigger:
