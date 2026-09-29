@@ -1,13 +1,16 @@
-title: "My Trendy Homelab Blog"
+title: "Groot Homelab Pages"
 description: "Self-hosted blogging via Gitea, Drone CI, and Docker"
-theme: minima
 
-# ⚠️ CRUCIAL: Keep this blank so files bake into the absolute root of the container
-baseurl: "" 
-url: "" # Replace with your Macvlan IP or domain
+# Keep these empty so assets build safely at the root level of your Nginx container
+baseurl: ""
+url: ""
 
-# Tells Jekyll how to format your blog post links cleanly
 permalink: /:categories/:year/:month/:day/:title.html
 
-plugins:
-  - jekyll-feed
+# Crucial fallback inclusions
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - .drone.yml
+  - .gitleaks.toml
+  - Dockerfile
