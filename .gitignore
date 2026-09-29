@@ -462,3 +462,6 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+# Local Model Workspace Protocol state
+.universal-mwp/
+
