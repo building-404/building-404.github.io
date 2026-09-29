@@ -1,0 +1,13 @@
+title: "My Trendy Homelab Blog"
+description: "Self-hosted blogging via Gitea, Drone CI, and Docker"
+theme: minima
+
+# ⚠️ CRUCIAL: Keep this blank so files bake into the absolute root of the container
+baseurl: "" 
+url: "" # Replace with your Macvlan IP or domain
+
+# Tells Jekyll how to format your blog post links cleanly
+permalink: /:categories/:year/:month/:day/:title.html
+
+plugins:
+  - jekyll-feed
