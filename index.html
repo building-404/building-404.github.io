@@ -3,14 +3,19 @@ layout: default
 title: Home
 ---
 
-<h2>Latest Logs & Updates 🛠️</h2>
+<div class="section-heading">
+  <span class="eyebrow">Field notes / 01</span>
+  <h2>Latest Logs &amp; Updates</h2>
+</div>
 
-<ul style="list-style-type: none; padding-left: 0;">
+<ul class="post-list">
   {% for post in site.posts %}
-    <li style="margin-bottom: 15px;">
-      <small style="color: #666; margin-right: 10px;">{{ post.date | date: "%Y-%m-%d" }}</small>
-      <a href="{{ post.url }}" style="font-weight: bold; font-size: 1.1em;">{{ post.title }}</a>
-      <p style="margin: 5px 0 0 0; color: #555; font-size: 0.95em;">{{ post.excerpt | strip_html | truncatewords: 25 }}</p>
+    <li class="post-preview">
+      <time class="post-date" datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%Y-%m-%d" }}</time>
+      <div>
+        <a class="post-link" href="{{ post.url }}">{{ post.title }}</a>
+        <p class="post-excerpt">{{ post.excerpt | strip_html | truncatewords: 25 }}</p>
+      </div>
     </li>
   {% endfor %}
 </ul>

@@ -4,30 +4,125 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ page.title }} | {{ site.title }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; max-width: 750px; margin: 50px auto; padding: 0 20px; line-height: 1.7; background: #ffffff; color: #222222; }
-        a { color: #0066cc; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        header { margin-bottom: 30px; }
-        header a { font-size: 1.4em; font-weight: bold; color: #111; }
-        hr { border: 0; border-top: 1px solid #eaeaea; margin: 20px 0; }
-        pre { background: #f6f8fa; padding: 16px; border-radius: 6px; overflow-x: auto; font-family: monospace; border: 1px solid #e1e4e8; }
-        code { font-family: monospace; background: #f6f8fa; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
-        pre code { background: none; padding: 0; font-size: 1em; }
-        footer { margin-top: 50px; font-size: 0.85em; color: #666; }
+        :root {
+            color-scheme: light;
+            --paper: #f3f5f1;
+            --surface: #ffffff;
+            --ink: #1c2926;
+            --muted: #687571;
+            --line: #d8dfda;
+            --green: #176b55;
+            --orange: #d9603b;
+            --lime: #d8ed8a;
+            --display: "Space Grotesk", "Trebuchet MS", sans-serif;
+            --body: "DM Sans", "Helvetica Neue", sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+        html { background: var(--paper); }
+        body {
+            max-width: 960px;
+            min-height: 100vh;
+            margin: 0 auto;
+            padding: 42px 36px 24px;
+            color: var(--ink);
+            font: 16px/1.7 var(--body);
+            background-color: var(--paper);
+            background-image: linear-gradient(rgba(28, 41, 38, 0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(28, 41, 38, 0.025) 1px, transparent 1px);
+            background-size: 28px 28px;
+        }
+
+        a { color: var(--green); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+        a:hover { color: var(--orange); }
+        a:focus-visible { outline: 3px solid var(--orange); outline-offset: 4px; }
+        .site-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            margin-bottom: 46px;
+            padding: 21px 0 24px;
+            border-top: 5px solid var(--green);
+            border-bottom: 1px solid var(--line);
+        }
+        .site-title {
+            color: var(--ink);
+            font: 700 30px/1.15 var(--display);
+            text-decoration: none;
+        }
+        .site-title:hover { color: var(--green); }
+        .site-description { max-width: 590px; margin: 8px 0 0; color: var(--muted); }
+        .site-mark {
+            display: grid;
+            flex: 0 0 64px;
+            width: 64px;
+            height: 64px;
+            place-items: center;
+            border: 1px solid var(--ink);
+            border-radius: 4px;
+            background: var(--lime);
+            color: var(--ink);
+            font: 700 19px/1 var(--display);
+        }
+        main { min-height: 48vh; animation: page-in 420ms ease-out both; }
+        h1, h2, h3 { color: var(--ink); font-family: var(--display); line-height: 1.2; }
+        h2 { margin: 0; font-size: 29px; }
+        .section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+        .eyebrow { color: var(--orange); font: 700 12px/1.4 var(--display); text-transform: uppercase; }
+        .post-list { margin: 0; padding: 0; list-style: none; }
+        .post-preview { display: grid; grid-template-columns: 145px minmax(0, 1fr); gap: 20px; padding: 20px 0; border-top: 1px solid var(--line); }
+        .post-date { padding-top: 3px; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+        .post-link { color: var(--ink); font: 600 21px/1.35 var(--display); text-decoration: none; }
+        .post-link:hover { color: var(--green); }
+        .post-excerpt { margin: 7px 0 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
+        .post-page { max-width: 740px; margin: 0 auto; }
+        .post-page h1 { margin: 0 0 10px; font-size: 40px; }
+        .post-meta { margin-bottom: 32px; color: var(--muted); font-size: 14px; }
+        .post-content h2 { margin: 36px 0 12px; font-size: 25px; }
+        .post-content h3 { margin: 28px 0 10px; font-size: 20px; }
+        .post-content p, .post-content li { max-width: 70ch; }
+        .post-content li + li { margin-top: 7px; }
+        .post-content blockquote { margin: 26px 0; padding: 4px 0 4px 20px; border-left: 3px solid var(--orange); color: var(--muted); }
+        pre { overflow-x: auto; padding: 18px; border: 1px solid var(--line); border-radius: 4px; background: #e9eeea; }
+        code { padding: 2px 5px; border-radius: 3px; background: #e9eeea; font: 0.9em ui-monospace, SFMono-Regular, Menlo, monospace; }
+        pre code { padding: 0; background: none; }
+        .back-link { display: inline-block; margin-top: 32px; font-weight: 700; }
+        .site-footer { margin-top: 58px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+
+        @keyframes page-in {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+        }
+        @media (max-width: 620px) {
+            body { padding: 24px 20px 18px; }
+            .site-header { margin-bottom: 34px; }
+            .site-title { font-size: 25px; }
+            .site-mark { flex-basis: 52px; width: 52px; height: 52px; }
+            .section-heading { align-items: flex-start; flex-direction: column; gap: 5px; }
+            .post-preview { grid-template-columns: 1fr; gap: 4px; padding: 16px 0; }
+            .post-page h1 { font-size: 32px; }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <a href="/">{{ site.title }}</a>
-        <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9em;">{{ site.description }}</p>
-        <hr>
+    <header class="site-header">
+        <div>
+            <a class="site-title" href="/">{{ site.title }}</a>
+            <p class="site-description">{{ site.description }}</p>
+        </div>
+        <span class="site-mark" aria-hidden="true">404</span>
     </header>
     <main>
         {{ content }}
     </main>
-    <footer>
-        <hr>
+    <footer class="site-footer">
         <p>© 2026 | Built with precision on local silicon.</p>
     </footer>
 </body>

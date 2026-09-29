@@ -1,15 +1,15 @@
 ---
 layout: default
 ---
-<article>
-    <h1 style="margin-bottom: 5px; color: #111;">{{ page.title }}</h1>
-    <div style="font-size: 0.9em; color: #666; margin-bottom: 30px;">
-        Published on {{ page.date | date: "%B %d, %Y" }}
+<article class="post-page">
+    <h1>{{ page.title }}</h1>
+    <div class="post-meta">
+        Published on <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%B %d, %Y" }}</time>
     </div>
-    <div>
+    <div class="post-content">
         {{ content }}
     </div>
 </article>
-<div style="margin-top: 40px;">
-    <a href="/">← Back to Home</a>
+<div class="post-page">
+    <a class="back-link" href="/">&larr; Back to Home</a>
 </div>
