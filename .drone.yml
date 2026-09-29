@@ -3,35 +3,50 @@ type: docker
 name: groot-pipeline
 
 steps:
-  # 1. Scan the codebase for hardcoded keys/secrets before processing the build
+  # 1. Run compliance security scan on Git contents
   - name: secret-scan
     image: zricethezav/gitleaks:v8.28.0
     commands:
       - gitleaks git --config=.gitleaks.toml --redact --verbose .
 
-  # 2. Build and extract assets safely using dry_run on your Synology Docker socket
-  - name: build
-    image: plugins/docker:20.14.2
+  # 2. Native CLI execution with network override and static IP assignment
+  - name: build-and-deploy
+    image: docker:26.1.4-cli
     depends_on:
       - secret-scan
-    settings:
-      repo: groot
-      tags: ${DRONE_COMMIT_SHA}
-      dockerfile: Dockerfile
-      daemon_off: true   # Uses host Docker engine to share cache layers
-      dry_run: true      # Discards final image to protect Synology storage arrays
-      build_args:
-        - REPO_NAME=${DRONE_REPO_NAME}
     volumes:
       - name: docker_sock
         path: /var/run/docker.sock
+      - name: shared-pages-volume
+        path: /target-folder
+    commands:
+      # A. Assemble your multi-stage Jekyll image layout on the Synology host
+      - docker build --build-arg REPO_NAME=${DRONE_REPO_NAME} -t gitea-pages/groot:${DRONE_COMMIT_SHA} .
+      
+      # B. Run container directly on the Macvlan network with your desired fixed IP
+      - docker run -d --name tmp_groot_${DRONE_COMMIT_SHA} --network nginx-proxy-manager_docker_macvlan --ip 192.168.69.13 gitea-pages/groot:${DRONE_COMMIT_SHA}
+      
+      # C. Prepare destination space and clean previous site histories 
+      - mkdir -p /target-folder/${DRONE_REPO_NAME}
+      - rm -rf /target-folder/${DRONE_REPO_NAME}/*
+      
+      # D. Direct asset migration over to your shared Nginx volume path
+      - docker cp tmp_groot_${DRONE_COMMIT_SHA}:/usr/share/nginx/html/. /target-folder/${DRONE_REPO_NAME}/
+      
+      # E. Execute clean up sweeps to completely avoid NAS storage clutter
+      - docker stop tmp_groot_${DRONE_COMMIT_SHA}
+      - docker rm tmp_groot_${DRONE_COMMIT_SHA}
+      - docker rmi gitea-pages/groot:${DRONE_COMMIT_SHA}
 
 volumes:
   - name: docker_sock
     host:
       path: /var/run/docker.sock
+  - name: shared-pages-volume
+    host:
+      path: /gitea-pages-volume
 
-# --- Trigger Strategy for Completed/Merged PRs ---
+# --- Trigger logic on PR Merges into Master ---
 trigger:
   branch:
     - master
