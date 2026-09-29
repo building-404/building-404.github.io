@@ -44,7 +44,7 @@ volumes:
       path: /var/run/docker.sock
   - name: shared-pages-volume
     host:
-      path: /volume1/docker/building-404
+      path: /gitea-pages-volume
 
 # --- Trigger logic on PR Merges into Master ---
 trigger:
