@@ -1,21 +1,22 @@
-# --- Stage 1: Build the Jekyll site from Markdown ---
+# --- Stage 1: Build & Compile Jekyll Content ---
 FROM ruby:3.2-alpine AS builder
+
+# Install build dependencies for native ruby extensions
 RUN apk add --no-cache build-base gcc libc-dev
 
 WORKDIR /app
+
+# Cache Ruby Gems layer optimization
 COPY Gemfile ./
 RUN bundle install
 
+# Bring in Markdown files and configurations
 COPY . .
+
+# Compile Jekyll Markdown layout into web-ready static files
 RUN bundle exec jekyll build --destination ./_site
 
-# --- Stage 2: Safe Extraction via Volume Mount ---
-FROM alpine:latest
-ARG REPO_NAME
-
-# The pipeline mounts your Nginx volume to /target-volume
-# This step automatically runs during the "dry-run" build phase
-RUN --mount=type=volume,target=/target-volume \
-    mkdir -p /target-volume/${REPO_NAME} && \
-    rm -rf /target-volume/${REPO_NAME}/* && \
-    cp -R /app/_site/* /target-volume/${REPO_NAME}/
+# --- Stage 2: Serve Payload Production Template ---
+FROM nginx:alpine
+# Copy the compiled HTML/CSS assets into Nginx's default directory
+COPY --from=builder /app/_site /usr/share/nginx/html
