@@ -1,0 +1,54 @@
+kind: pipeline
+type: docker
+name: groot-pipeline
+
+steps:
+  # 1. Scan code for leaked API keys, tokens, or credentials
+  - name: secret-scan
+    image: zricethezav/gitleaks:v8.28.0
+    commands:
+      - gitleaks git --config=.gitleaks.toml --redact --verbose .
+
+  # 2. Build the Docker image via host socket to test compilations
+  - name: build
+    image: plugins/docker:20.14.2
+    depends_on:
+      - secret-scan
+    settings:
+      repo: groot
+      tags: ${DRONE_COMMIT_SHA}
+      dockerfile: Dockerfile
+      daemon_off: true # Uses host docker engine safely
+      dry_run: true    # Prevents external image pushes
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+
+  # 3. Export production files directly out of the built local layout
+  - name: deploy-static-assets
+    image: docker:latest
+    depends_on:
+      - build
+    volumes:
+      - name: docker_sock
+        path: /var/run/docker.sock
+      - name: shared-pages-volume
+        path: /target-folder
+    commands:
+      # Temporarily create a tracking container out of your dry-run build hash
+      - docker create --name temp_groot groot:${DRONE_COMMIT_SHA}
+      # Clean out previous deployments and map directories
+      - mkdir -p /target-folder/${DRONE_REPO_NAME}
+      - rm -rf /target-folder/${DRONE_REPO_NAME}/*
+      # Copy static assets cleanly out of the container straight into your web volume
+      - docker cp temp_groot:/usr/share/nginx/html/. /target-folder/${DRONE_REPO_NAME}/
+      # Clean up the container metadata
+      - docker rm temp_groot
+
+volumes:
+  - name: docker_sock
+    host:
+      path: /var/run/docker.sock
+  - name: shared-pages-volume
+    host:
+      path: /gitea-pages-volume # Your pure Docker volume mapped in your runner container
