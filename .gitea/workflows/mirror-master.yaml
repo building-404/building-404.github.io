@@ -24,7 +24,8 @@ jobs:
           git config --global url."https://oauth2:${GH_TOKEN}@github.com".insteadOf "https://github.com"
 
           # FIXED: Added the required forward slash right after github.com
-          git remote add github https://github.com/${GH_USER}/${GH_REPO}.git
+          # git remote add github https://github.com/${GH_USER}/${GH_REPO}.git
+          git remote add github "https://oauth2:${GH_TOKEN}@github.com/${GH_USER}/${GH_REPO}.git"
 
           # 2. Setup your temporary Git identity
           git config user.name "Building 404"
