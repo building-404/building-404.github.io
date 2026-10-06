@@ -21,7 +21,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           # 1. Configure authentication cleanly
-          git config --global url."https://oauth2:${GH_TOKEN}@github.com/".insteadOf "https://github.com"
+          git config --global url."https://oauth2:${GH_TOKEN}@github.com".insteadOf "https://github.com"
 
           # FIXED: Added the required forward slash right after github.com
           git remote add github https://github.com/${GH_USER}/${GH_REPO}.git
